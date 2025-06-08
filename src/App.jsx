@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
@@ -7,15 +12,18 @@ import Tables from "./features/Tables";
 import Kanban from "./features/Kanban";
 import Calendar from "./features/Calendar";
 import Work from "./features/work";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ Import
+import Login from "./components/Login"; // 🔐 Your login page
+import Unauthorized from "./components/Unauthorized"; // 🚫 Unauthorized fallback
 
 const Layout = ({ children }) => {
   const location = useLocation();
 
-  // Don't show layout if on 404
-  const isNotFound = location.pathname !== "/" &&
-                     !["/tables", "/kanban", "/calendar", "/work"].includes(location.pathname);
+  const allowedPaths = ["/", "/tables", "/kanban", "/calendar", "/work"];
+  const isNotFound = !allowedPaths.includes(location.pathname);
 
   if (isNotFound) {
     return (
@@ -45,16 +53,66 @@ const AppContent = () => {
 
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/tables" element={<Tables />} />
-          <Route path="/kanban" element={<Kanban />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/work" element={<Work />} />
-          <Route path="*" element={<div />} /> {/* Placeholder; actual 404 handled by Layout */}
-        </Routes>
-      </Layout>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+
+        {/* Protected Routes (wrapped in Layout) */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "user"]}>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tables"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Layout>
+                <Tables />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/kanban"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout>
+                <Kanban />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute requiredRole="user">
+              <Calendar />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/work"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Layout>
+                <Work />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback route */}
+        <Route path="*" element={<div>404 Not Found</div>} />
+      </Routes>
     </Router>
   );
 };
@@ -63,7 +121,9 @@ const App = () => {
   return (
     <ThemeProvider>
       <Toaster position="top-right" reverseOrder={false} />
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   );
 };
