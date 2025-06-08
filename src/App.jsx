@@ -93,8 +93,10 @@ const AppContent = () => {
         <Route
           path="/calendar"
           element={
-            <ProtectedRoute requiredRole="user">
+            <ProtectedRoute allowedRoles={["admin", "user"]}>
+              <Layout>
               <Calendar />
+              </Layout>
             </ProtectedRoute>
           }
         />
