@@ -11,7 +11,7 @@ import Dashboard from "./features/Dashboard";
 import Tables from "./features/Tables";
 import Kanban from "./features/Kanban";
 import Calendar from "./features/Calendar";
-import Work from "./features/work";
+import Work from "./features/Work";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { AuthProvider } from "./context/AuthContext";
